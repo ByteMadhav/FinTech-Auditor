@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlalchemy
+celery
+redis
+python-multipart
+langgraph
+langchain-openai
+langchain-huggingface
+langchain-chroma
+sentence-transformers
+pydantic
+python-dotenv

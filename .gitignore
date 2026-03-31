@@ -1,4 +1,29 @@
+# --- Virtual Environment (Your screenshot folders) ---
+Include/
+Lib/
+Scripts/
+share/
+pyvenv.cfg
+
+# --- Subfolder environments (if any) ---
 venv/
-*.pyc
+env/
+**/venv/
+**/env/
+
+# --- Python temporary files ---
 __pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+.Python
+
+# --- App Secrets & Databases ---
 .env
+*.db
+*.sqlite3
+
+# --- IDE & OS ---
+.vscode/
+.idea/
+.DS_Store
