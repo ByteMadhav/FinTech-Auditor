@@ -11,3 +11,7 @@ langchain-chroma
 sentence-transformers
 pydantic
 python-dotenv
+easyocr
+torch
+torchvision
+opencv-python-headless
