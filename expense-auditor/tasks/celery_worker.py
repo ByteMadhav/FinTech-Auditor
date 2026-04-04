@@ -3,6 +3,8 @@ import json
 import asyncio
 from dotenv import load_dotenv
 from sqlalchemy.exc import IntegrityError
+import pytesseract
+from PIL import Image
 
 from tasks.celery_app import celery_app
 from app.db.session import SessionLocal
@@ -11,21 +13,27 @@ from app.ai_agent import ComplianceAgent
 
 load_dotenv()
 
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+def extract_receipt_data(file_path: str) -> dict:
+    image = Image.open(file_path)
+    ocr_text = pytesseract.image_to_string(image).strip()
+    return {
+        'raw_text': ocr_text,
+        'ocr_text': ocr_text,
+        'merchant': '',
+        'amount': 0,
+        'date': 'Unknown',
+        'category': 'Other'
+    }
+
 @celery_app.task(bind=True, name='process_receipt')
 def process_receipt_task(self, receipt_data: dict, user_profile: dict):
     db = SessionLocal()
     try:
         if not receipt_data.get('vision_extracted'):
-            from app.core.ocr import get_text_from_image, extract_structured_data
-
-            # Step 1: Extract raw text using OCR
-            raw_text = get_text_from_image(receipt_data['file_path'])
-
-            # Step 2: Extract structured data from the raw text using an LLM
-            extracted_data = extract_structured_data(raw_text)
-
-            # Update receipt_data with the extracted info
-            receipt_data.update(extracted_data)
+            extracted = extract_receipt_data(receipt_data['file_path'])
+            receipt_data.update(extracted)
             receipt_data['vision_extracted'] = True
 
         agent = ComplianceAgent()

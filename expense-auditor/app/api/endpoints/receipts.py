@@ -46,44 +46,20 @@ async def get_receipt_status(task_id: str):
     result = AsyncResult(task_id, app=celery_app)
 
     if result.state == "PENDING":
-        return {
-            "task_id": task_id,
-            "status": "pending",
-            "progress": 0,
-            "verdict": None,
-            "explanation": None,
-            "compliance_score": None,
-            "reasoning_steps": None,
-            "result": None
-        }
+        return {"task_id": task_id, "status": "pending", "progress": 0,
+                "verdict": None, "explanation": None, "compliance_score": None,
+                "reasoning_steps": None, "result": None}
 
     if result.failed():
-        return {
-            "task_id": task_id,
-            "status": "failed",
-            "progress": 0,
-            "verdict": "FLAGGED",
-            "explanation": str(result.result),
-            "compliance_score": None,
-            "reasoning_steps": None,
-            "result": None
-        }
+        return {"task_id": task_id, "status": "failed", "progress": 0,
+                "verdict": "FLAGGED", "explanation": str(result.result),
+                "compliance_score": None, "reasoning_steps": None, "result": None}
 
     if result.ready():
         raw = result.result if isinstance(result.result, dict) else {}
-        return {
-            "task_id": task_id,
-            "status": "completed",
-            "progress": 100,
-            "verdict": raw.get("verdict"),
-            "explanation": raw.get("explanation"),
-            "compliance_score": raw.get("compliance_score"),
-            "reasoning_steps": raw.get("reasoning_steps", []),
-            "result": raw,
-        }
+        return {"task_id": task_id, "status": "completed", "progress": 100,
+                "verdict": raw.get("verdict"), "explanation": raw.get("explanation"),
+                "compliance_score": raw.get("compliance_score"),
+                "reasoning_steps": raw.get("reasoning_steps", []), "result": raw}
 
-    return {
-        "task_id": task_id,
-        "status": "processing",
-        "progress": 50
-    }
+    return {"task_id": task_id, "status": "processing", "progress": 50}

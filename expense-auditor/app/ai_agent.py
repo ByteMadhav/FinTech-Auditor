@@ -25,7 +25,7 @@ class ComplianceAgent:
     def __init__(self):
         self.db = get_db()
         self.llm = ChatOpenAI(
-            base_url="http://127.0.0.1:1234/v1",
+            base_url="http://127.0.0.1:1234",
             api_key="lm-studio",
             model="qwen3.5-9b-claude-4.6-opus-uncensored-distilled",
             temperature=0.0 ,
@@ -67,12 +67,41 @@ class ComplianceAgent:
     async def _step_extract_normalize(self, state: ComplianceState) -> dict:
         steps = state.get('reasoning_steps', [])
         raw = state['receipt_data']
+    
+        raw_text = raw.get('raw_text', '') or raw.get('ocr_text', '') or ''
+        merchant  = raw.get('merchant', '')
+        amount    = raw.get('amount', 0)
+        date      = raw.get('date', 'Unknown')
+        category  = raw.get('category', 'Other')
+    
+        if not amount and raw_text:
+            amount_match = re.search(r'\$\s*([\d,]+(?:\.\d{1,2})?)', raw_text)
+            if amount_match:
+                amount = float(amount_match.group(1).replace(',', ''))
+    
+        if not merchant and raw_text:
+            description = re.sub(r'-?\s*\$[\d,]+(?:\.\d{1,2})?', '', raw_text)
+            description = re.sub(
+                r'\b(total|subtotal|tax|receipt|invoice|payment|paid|amount|due|balance|date|time)\b',
+                '', description, flags=re.IGNORECASE
+            )
+            description = re.sub(r'\s+', ' ', description).strip(' -–—:,.')
+    
+            if len(description) > 3:
+                merchant = description
+            else:
+                merchant = raw_text.strip()
+    
+        if not merchant or merchant.strip().lower() in ('none', ''):
+            merchant = raw_text.strip() if raw_text else 'Unknown'
+    
         normalized = {
-            'merchant': raw.get('merchant', 'Unknown'),
-            'amount': round(abs(float(raw.get('amount', 0))), 2),
-            'date': raw.get('date', 'Unknown'),
-            'category': raw.get('category', 'Other')
+            'merchant': merchant,
+            'amount': round(abs(float(amount or 0)), 2),
+            'date': date,
+            'category': category
         }
+    
         steps.append(f"✓ Normalized data: ${normalized['amount']} at {normalized['merchant']}")
         return {"normalized_data": normalized, "reasoning_steps": steps}
 

@@ -21,7 +21,7 @@ class RAGService:
                     "score": 1.0 / (1.0 + score),
                     "metadata": {
                         "policy_section": doc.metadata.get("section", "General"),
-                        "rule_text": doc.page_content  # ← use page_content not metadata
+                        "rule_text": doc.page_content
                     }
                 } for doc, score in docs
             ]
